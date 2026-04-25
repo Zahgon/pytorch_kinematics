@@ -34,11 +34,11 @@ e.g.
 
 
 def xyzw_to_wxyz(quaternions):
-    return torch.cat([quaternions[..., None, -1], quaternions[..., :3]], dim=-1)
+    pass
 
 
 def wxyz_to_xyzw(quaternions):
-    return torch.cat([quaternions[..., 1:], quaternions[..., None, 0]], dim=-1)
+    pass
 
 
 def quaternion_to_matrix(quaternions):
@@ -52,24 +52,7 @@ def quaternion_to_matrix(quaternions):
     Returns:
         Rotation matrices as tensor of shape (..., 3, 3).
     """
-    r, i, j, k = torch.unbind(quaternions, -1)
-    two_s = 2.0 / (quaternions * quaternions).sum(-1)
-
-    o = torch.stack(
-        (
-            1 - two_s * (j * j + k * k),
-            two_s * (i * j - k * r),
-            two_s * (i * k + j * r),
-            two_s * (i * j + k * r),
-            1 - two_s * (i * i + k * k),
-            two_s * (j * k - i * r),
-            two_s * (i * k - j * r),
-            two_s * (j * k + i * r),
-            1 - two_s * (i * i + j * j),
-        ),
-        -1,
-    )
-    return o.reshape(quaternions.shape[:-1] + (3, 3))
+    pass
 
 
 def _copysign(a, b):
@@ -86,8 +69,7 @@ def _copysign(a, b):
     Returns:
         Tensor of the same shape as a with the signs of b.
     """
-    signs_differ = (a < 0) != (b < 0)
-    return torch.where(signs_differ, -a, a)
+    pass
 
 
 def _sqrt_positive_part(x):
@@ -95,7 +77,7 @@ def _sqrt_positive_part(x):
     Returns torch.sqrt(torch.max(0, x))
     but with a zero subgradient where x is 0.
     """
-    return torch.sqrt(torch.clamp(x, min=0.0))
+    pass
 
 
 def matrix_to_quaternion(matrix):
@@ -108,50 +90,7 @@ def matrix_to_quaternion(matrix):
     Returns:
         quaternions with real part first, as tensor of shape (..., 4). as w,x,y,z
     """
-    if matrix.size(-1) != 3 or matrix.size(-2) != 3:
-        raise ValueError(f"Invalid rotation matrix shape {matrix.shape}.")
-
-    batch_dim = matrix.shape[:-2]
-    m00, m01, m02, m10, m11, m12, m20, m21, m22 = torch.unbind(
-        matrix.reshape(batch_dim + (9,)), dim=-1
-    )
-
-    q_abs = _sqrt_positive_part(
-        torch.stack(
-            [
-                1.0 + m00 + m11 + m22,
-                1.0 + m00 - m11 - m22,
-                1.0 - m00 + m11 - m22,
-                1.0 - m00 - m11 + m22,
-            ],
-            dim=-1,
-        )
-    )
-
-    # we produce the desired quaternion multiplied by each of r, i, j, k
-    quat_by_rijk = torch.stack(
-        [
-            torch.stack([q_abs[..., 0] ** 2, m21 - m12, m02 - m20, m10 - m01], dim=-1),
-            torch.stack([m21 - m12, q_abs[..., 1] ** 2, m10 + m01, m02 + m20], dim=-1),
-            torch.stack([m02 - m20, m10 + m01, q_abs[..., 2] ** 2, m12 + m21], dim=-1),
-            torch.stack([m10 - m01, m20 + m02, m21 + m12, q_abs[..., 3] ** 2], dim=-1),
-        ],
-        dim=-2,
-    )
-
-    # We floor here at 0.1 but the exact level is not important; if q_abs is small,
-    # the candidate won't be picked.
-    flr = torch.full((), 0.1, dtype=q_abs.dtype, device=q_abs.device)
-    quat_candidates = quat_by_rijk / (2.0 * q_abs[..., None].max(flr))
-
-    # if not for numerical problems, quat_candidates[i] should be same (up to a sign),
-    # forall i; we pick the best-conditioned one (with the largest denominator)
-
-    # Pick the best-conditioned quaternion for each batch element
-    best_idx = q_abs.argmax(dim=-1)  # (*batch_dim,)
-    # quat_candidates shape: (*batch_dim, 4, 4) -> gather along dim=-2
-    idx = best_idx.unsqueeze(-1).unsqueeze(-1).expand(*batch_dim, 1, 4)
-    return quat_candidates.gather(-2, idx).squeeze(-2)
+    pass
 
 
 def _axis_angle_rotation(axis: str, angle):
@@ -166,20 +105,7 @@ def _axis_angle_rotation(axis: str, angle):
     Returns:
         Rotation matrices as tensor of shape (..., 3, 3).
     """
-
-    cos = torch.cos(angle)
-    sin = torch.sin(angle)
-    one = torch.ones_like(angle)
-    zero = torch.zeros_like(angle)
-
-    if axis == "X":
-        R_flat = (one, zero, zero, zero, cos, -sin, zero, sin, cos)
-    if axis == "Y":
-        R_flat = (cos, zero, sin, zero, one, zero, -sin, zero, cos)
-    if axis == "Z":
-        R_flat = (cos, -sin, zero, sin, cos, zero, zero, zero, one)
-
-    return torch.stack(R_flat, -1).reshape(angle.shape + (3, 3))
+    pass
 
 
 def euler_angles_to_matrix(euler_angles, convention: str):
@@ -194,17 +120,7 @@ def euler_angles_to_matrix(euler_angles, convention: str):
     Returns:
         Rotation matrices as tensor of shape (..., 3, 3).
     """
-    if euler_angles.dim() == 0 or euler_angles.shape[-1] != 3:
-        raise ValueError("Invalid input euler angles.")
-    if len(convention) != 3:
-        raise ValueError("Convention must have 3 letters.")
-    if convention[1] in (convention[0], convention[2]):
-        raise ValueError(f"Invalid convention {convention}.")
-    for letter in convention:
-        if letter not in ("X", "Y", "Z"):
-            raise ValueError(f"Invalid letter {letter} in convention string.")
-    matrices = map(_axis_angle_rotation, convention, torch.unbind(euler_angles, -1))
-    return functools.reduce(torch.matmul, matrices)
+    pass
 
 
 def _angle_from_tan(
@@ -228,25 +144,11 @@ def _angle_from_tan(
         Euler Angles in radians for each matrix in data as a tensor
         of shape (...).
     """
-
-    i1, i2 = {"X": (2, 1), "Y": (0, 2), "Z": (1, 0)}[axis]
-    if horizontal:
-        i2, i1 = i1, i2
-    even = (axis + other_axis) in ["XY", "YZ", "ZX"]
-    if horizontal == even:
-        return torch.atan2(data[..., i1], data[..., i2])
-    if tait_bryan:
-        return torch.atan2(-data[..., i2], data[..., i1])
-    return torch.atan2(data[..., i2], -data[..., i1])
+    pass
 
 
 def _index_from_letter(letter: str):
-    if letter == "X":
-        return 0
-    if letter == "Y":
-        return 1
-    if letter == "Z":
-        return 2
+    pass
 
 
 def matrix_to_euler_angles(matrix, convention: str):
@@ -260,35 +162,7 @@ def matrix_to_euler_angles(matrix, convention: str):
     Returns:
         Euler angles in radians as tensor of shape (..., 3).
     """
-    if len(convention) != 3:
-        raise ValueError("Convention must have 3 letters.")
-    if convention[1] in (convention[0], convention[2]):
-        raise ValueError(f"Invalid convention {convention}.")
-    for letter in convention:
-        if letter not in ("X", "Y", "Z"):
-            raise ValueError(f"Invalid letter {letter} in convention string.")
-    if matrix.size(-1) != 3 or matrix.size(-2) != 3:
-        raise ValueError(f"Invalid rotation matrix  shape f{matrix.shape}.")
-    i0 = _index_from_letter(convention[0])
-    i2 = _index_from_letter(convention[2])
-    tait_bryan = i0 != i2
-    if tait_bryan:
-        central_angle = torch.asin(
-            matrix[..., i0, i2] * (-1.0 if i0 - i2 in [-1, 2] else 1.0)
-        )
-    else:
-        central_angle = torch.acos(matrix[..., i0, i0])
-
-    o = (
-        _angle_from_tan(
-            convention[0], convention[1], matrix[..., i2], False, tait_bryan
-        ),
-        central_angle,
-        _angle_from_tan(
-            convention[2], convention[1], matrix[..., i0, :], True, tait_bryan
-        ),
-    )
-    return torch.stack(o, -1)
+    pass
 
 
 def random_quaternions(
@@ -309,10 +183,7 @@ def random_quaternions(
     Returns:
         Quaternions as tensor of shape (N, 4).
     """
-    o = torch.randn((n, 4), dtype=dtype, device=device, requires_grad=requires_grad)
-    s = (o * o).sum(1)
-    o = o / _copysign(torch.sqrt(s), o[:, 0])[:, None]
-    return o
+    pass
 
 
 def random_rotations(
@@ -332,10 +203,7 @@ def random_rotations(
     Returns:
         Rotation matrices as tensor of shape (n, 3, 3).
     """
-    quaternions = random_quaternions(
-        n, dtype=dtype, device=device, requires_grad=requires_grad
-    )
-    return quaternion_to_matrix(quaternions)
+    pass
 
 
 def random_rotation(
@@ -354,7 +222,7 @@ def random_rotation(
     Returns:
         Rotation matrix as tensor of shape (3, 3).
     """
-    return random_rotations(1, dtype, device, requires_grad)[0]
+    pass
 
 
 def standardize_quaternion(quaternions):
@@ -369,7 +237,7 @@ def standardize_quaternion(quaternions):
     Returns:
         Standardized quaternions as tensor of shape (..., 4).
     """
-    return torch.where(quaternions[..., 0:1] < 0, -quaternions, quaternions)
+    pass
 
 
 def quaternion_raw_multiply(a, b):
@@ -384,13 +252,7 @@ def quaternion_raw_multiply(a, b):
     Returns:
         The product of a and b, a tensor of quaternions shape (..., 4).
     """
-    aw, ax, ay, az = torch.unbind(a, -1)
-    bw, bx, by, bz = torch.unbind(b, -1)
-    ow = aw * bw - ax * bx - ay * by - az * bz
-    ox = aw * bx + ax * bw + ay * bz - az * by
-    oy = aw * by - ax * bz + ay * bw + az * bx
-    oz = aw * bz + ax * by - ay * bx + az * bw
-    return torch.stack((ow, ox, oy, oz), -1)
+    pass
 
 
 def quaternion_multiply(a, b):
@@ -406,8 +268,7 @@ def quaternion_multiply(a, b):
     Returns:
         The product of a and b, a tensor of quaternions of shape (..., 4).
     """
-    ab = quaternion_raw_multiply(a, b)
-    return standardize_quaternion(ab)
+    pass
 
 
 def quaternion_invert(quaternion):
@@ -422,8 +283,7 @@ def quaternion_invert(quaternion):
     Returns:
         The inverse, a tensor of quaternions of shape (..., 4).
     """
-
-    return quaternion * quaternion.new_tensor([1, -1, -1, -1])
+    pass
 
 
 def quaternion_apply(quaternion, point):
@@ -438,15 +298,7 @@ def quaternion_apply(quaternion, point):
     Returns:
         Tensor of rotated points of shape (..., 3).
     """
-    if point.size(-1) != 3:
-        raise ValueError(f"Points are not in 3D, f{point.shape}.")
-    real_parts = point.new_zeros(point.shape[:-1] + (1,))
-    point_as_quaternion = torch.cat((real_parts, point), -1)
-    out = quaternion_raw_multiply(
-        quaternion_raw_multiply(quaternion, point_as_quaternion),
-        quaternion_invert(quaternion),
-    )
-    return out[..., 1:]
+    pass
 
 
 def axis_and_d_to_pris_matrix(axis, d):
@@ -461,15 +313,7 @@ def axis_and_d_to_pris_matrix(axis, d):
     Returns: [..., 4, 4]
 
     """
-    batch_axes = axis.shape[:-1]
-    pos = axis * d.unsqueeze(-1)
-    mat44 = torch.zeros(*batch_axes, 4, 4, device=axis.device, dtype=axis.dtype)
-    mat44[..., 0, 0] = 1.0
-    mat44[..., 1, 1] = 1.0
-    mat44[..., 2, 2] = 1.0
-    mat44[..., 3, 3] = 1.0
-    mat44[..., :3, 3] = pos
-    return mat44
+    pass
 
 
 def axis_and_angle_to_matrix_44(axis, theta):
@@ -484,12 +328,7 @@ def axis_and_angle_to_matrix_44(axis, theta):
     Returns: [..., 4, 4]
 
     """
-    rot = axis_and_angle_to_matrix_33(axis, theta)
-    batch_shape = axis.shape[:-1]
-    mat44 = torch.zeros(*batch_shape, 4, 4, device=axis.device, dtype=axis.dtype)
-    mat44[..., :3, :3] = rot
-    mat44[..., 3, 3] = 1.0
-    return mat44
+    pass
 
 
 def axis_and_angle_to_matrix_33(axis, theta):
@@ -504,24 +343,7 @@ def axis_and_angle_to_matrix_33(axis, theta):
     Returns: [..., 3, 3]
 
     """
-    # based on https://ai.stackexchange.com/questions/14041/, and checked against wikipedia
-    c = torch.cos(theta)  # NOTE: cos is not that precise for float32, you may want to use float64
-    one_minus_c = 1 - c
-    s = torch.sin(theta)
-    kx, ky, kz = torch.unbind(axis, -1)
-    r00 = c + kx * kx * one_minus_c
-    r01 = kx * ky * one_minus_c - kz * s
-    r02 = kx * kz * one_minus_c + ky * s
-    r10 = ky * kx * one_minus_c + kz * s
-    r11 = c + ky * ky * one_minus_c
-    r12 = ky * kz * one_minus_c - kx * s
-    r20 = kz * kx * one_minus_c - ky * s
-    r21 = kz * ky * one_minus_c + kx * s
-    r22 = c + kz * kz * one_minus_c
-    rot = torch.stack([torch.stack([r00, r01, r02], -1),
-                       torch.stack([r10, r11, r12], -1),
-                       torch.stack([r20, r21, r22], -1)], -2)
-    return rot
+    pass
 
 
 def axis_angle_to_matrix(axis_angle):
@@ -539,9 +361,7 @@ def axis_angle_to_matrix(axis_angle):
     Returns:
         Rotation matrices as tensor of shape (..., 3, 3).
     """
-    warn('This is deprecated because it is slow. Use axis_and_angle_to_matrix_33 instead.',
-         DeprecationWarning, stacklevel=2)
-    return quaternion_to_matrix(axis_angle_to_quaternion(axis_angle))
+    pass
 
 
 def matrix_to_axis_angle(matrix):
@@ -557,7 +377,7 @@ def matrix_to_axis_angle(matrix):
             turned anticlockwise in radians around the vector's
             direction.
     """
-    return quaternion_to_axis_angle(matrix_to_quaternion(matrix))
+    pass
 
 
 def axis_angle_to_quaternion(axis_angle):
@@ -573,18 +393,7 @@ def axis_angle_to_quaternion(axis_angle):
     Returns:
         quaternions with real part first, as tensor of shape (..., 4).
     """
-    angles = torch.norm(axis_angle, p=2, dim=-1, keepdim=True)
-    half_angles = 0.5 * angles
-    eps = 1e-6
-    # for x small, sin(x/2) is about x/2 - (x/2)^3/6
-    # so sin(x/2)/x is about 1/2 - (x*x)/48
-    small_theta = 0.5 - (angles * angles) / 48
-    large_theta = torch.sin(half_angles) / angles
-    sin_half_angles_over_angles = torch.where(angles.abs() < eps, small_theta, large_theta)
-    quaternions = torch.cat(
-        [torch.cos(half_angles), axis_angle * sin_half_angles_over_angles], dim=-1
-    )
-    return quaternions
+    pass
 
 
 def quaternion_to_axis_angle(quaternions):
@@ -601,16 +410,7 @@ def quaternion_to_axis_angle(quaternions):
             turned anticlockwise in radians around the vector's
             direction.
     """
-    norms = torch.norm(quaternions[..., 1:], p=2, dim=-1, keepdim=True)
-    half_angles = torch.atan2(norms, quaternions[..., :1])
-    angles = 2 * half_angles
-    eps = 1e-6
-    # for x small, sin(x/2) is about x/2 - (x/2)^3/6
-    # so sin(x/2)/x is about 1/2 - (x*x)/48
-    small_theta = 0.5 - (angles * angles) / 48
-    large_theta = torch.sin(half_angles) / angles
-    sin_half_angles_over_angles = torch.where(angles.abs() < eps, small_theta, large_theta)
-    return quaternions[..., 1:] / sin_half_angles_over_angles
+    pass
 
 
 def rotation_6d_to_matrix(d6: torch.Tensor) -> torch.Tensor:
@@ -628,13 +428,7 @@ def rotation_6d_to_matrix(d6: torch.Tensor) -> torch.Tensor:
     IEEE Conference on Computer Vision and Pattern Recognition, 2019.
     Retrieved from http://arxiv.org/abs/1812.07035
     """
-
-    a1, a2 = d6[..., :3], d6[..., 3:]
-    b1 = F.normalize(a1, dim=-1)
-    b2 = a2 - (b1 * a2).sum(-1, keepdim=True) * b1
-    b2 = F.normalize(b2, dim=-1)
-    b3 = torch.cross(b1, b2, dim=-1)
-    return torch.stack((b1, b2, b3), dim=-2)
+    pass
 
 
 def matrix_to_rotation_6d(matrix: torch.Tensor) -> torch.Tensor:
@@ -652,39 +446,24 @@ def matrix_to_rotation_6d(matrix: torch.Tensor) -> torch.Tensor:
     IEEE Conference on Computer Vision and Pattern Recognition, 2019.
     Retrieved from http://arxiv.org/abs/1812.07035
     """
-    return matrix[..., :2, :].clone().reshape(*matrix.size()[:-2], 6)
+    pass
 
 
 def matrix44_to_se3_9d(matrix: torch.Tensor) -> torch.Tensor:
-    r = matrix_to_rotation_6d(matrix[..., :3, :3])
-    t = matrix[..., :3, 3]
-    return torch.cat([r, t], dim=-1)
+    pass
 
 
 def se3_9d_to_matrix44(se3: torch.Tensor) -> torch.Tensor:
-    r = rotation_6d_to_matrix(se3[..., :6])
-    t = se3[..., 6:]
-    H = torch.eye(4, device=r.device, dtype=r.dtype).repeat(r.shape[:-2] + (1, 1))
-    H[..., :3, :3] = r
-    H[..., :3, 3] = t
-    return H
+    pass
 
 
 def matrix_to_pos_rot(m):
     """Convert 4x4 transformation matrix to (position, xyzw quatnerion) used by pybullet and RViz"""
-    pos = m[..., :3, 3]
-    rot = matrix_to_quaternion(m[..., :3, :3])
-    rot = wxyz_to_xyzw(rot)
-    return pos, rot
+    pass
 
 
 def pos_rot_to_matrix(pos, rot):
-    rot = xyzw_to_wxyz(rot)
-    rot = quaternion_to_matrix(rot)
-    m = torch.eye(4, device=pos.device, dtype=pos.dtype).repeat(pos.shape[:-1] + (1, 1))
-    m[..., :3, 3] = pos
-    m[..., :3, :3] = rot
-    return m
+    pass
 
 
 # axis sequences for Euler angles
@@ -730,48 +509,4 @@ def quaternion_from_euler(rpy, axes='sxyz'):
     axes : One of 24 axis sequences as string or encoded tuple
 
     """
-    try:
-        firstaxis, parity, repetition, frame = _AXES2TUPLE[axes.lower()]
-    except (AttributeError, KeyError):
-        _TUPLE2AXES[axes]  # noqa: validation
-        firstaxis, parity, repetition, frame = axes
-
-    ai, aj, ak = torch.unbind(rpy, -1)
-    i = firstaxis + 1
-    j = _NEXT_AXIS[i + parity - 1] + 1
-    k = _NEXT_AXIS[i - parity] + 1
-
-    if frame:
-        ai, ak = ak, ai
-    if parity:
-        aj = -aj
-
-    ai /= 2.0
-    aj /= 2.0
-    ak /= 2.0
-    ci = torch.cos(ai)
-    si = torch.sin(ai)
-    cj = torch.cos(aj)
-    sj = torch.sin(aj)
-    ck = torch.cos(ak)
-    sk = torch.sin(ak)
-    cc = ci * ck
-    cs = ci * sk
-    sc = si * ck
-    ss = si * sk
-
-    q = torch.zeros([*rpy.shape[:-1], 4]).to(rpy)
-    if repetition:
-        q[..., 0] = cj * (cc - ss)
-        q[..., i] = cj * (cs + sc)
-        q[..., j] = sj * (cc + ss)
-        q[..., k] = sj * (cs - sc)
-    else:
-        q[..., 0] = cj * cc + sj * ss
-        q[..., i] = cj * sc - sj * cs
-        q[..., j] = cj * ss + sj * cc
-        q[..., k] = cj * cs - sj * sc
-    if parity:
-        q[..., j] *= -1.0
-
-    return q
+    pass

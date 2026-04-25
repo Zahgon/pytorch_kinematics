@@ -22,12 +22,7 @@ def pfloat(x):
 
 
 def xml_children(node):
-    children = node.getchildren()
-
-    def predicate(node):
-        pass
-
-    return list(filter(predicate, children))
+    pass
 
 
 def isstring(obj):

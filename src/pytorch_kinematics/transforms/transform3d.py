@@ -174,48 +174,7 @@ class Transform3d:
                 that is also passed in. The position overrides the position given in the
                 matrix argument, if any.
         """
-        if matrix is None:
-            self._matrix = torch.eye(4, dtype=dtype, device=device).unsqueeze(0).repeat(default_batch_size, 1, 1)
-        else:
-            if matrix.ndim not in (2, 3):
-                raise ValueError('"matrix" has to be a 2- or a 3-dimensional tensor.')
-            if matrix.shape[-2] != 4 or matrix.shape[-1] != 4:
-                raise ValueError(
-                    '"matrix" has to be a tensor of shape (minibatch, 4, 4)'
-                )
-            # set the device from matrix
-            device = matrix.device
-            self._matrix = matrix.view(-1, 4, 4)
-
-        if pos is not None:
-            ones = torch.ones([1], dtype=dtype, device=device)
-            if not torch.is_tensor(pos):
-                pos = torch.tensor(pos, dtype=dtype, device=device)
-            if pos.ndim in (2, 3):
-                ones = ones.repeat(*pos.shape[:-1], 1)
-                if pos.ndim in (2, 3) and pos.shape[0] > 1 and self._matrix.shape[0] == 1:
-                    self._matrix = self._matrix.repeat(pos.shape[0], 1, 1)
-            pos_h = torch.cat((pos, ones), dim=-1).reshape(-1, 4, 1)
-            self._matrix = torch.cat((self._matrix[:, :, :3], pos_h), dim=-1)
-
-        if rot is not None:
-            zeros = torch.zeros(1, 3, dtype=dtype, device=device)
-            if not torch.is_tensor(rot):
-                rot = torch.tensor(rot, dtype=dtype, device=device)
-            if rot.shape[-1] == 4:
-                rot = quaternion_to_matrix(rot)
-            elif rot.shape[-1] == 3 and (len(rot.shape) == 1 or rot.shape[-2] != 3):
-                rot = euler_angles_to_matrix(rot, DEFAULT_EULER_CONVENTION)
-            if rot.ndim == 3:
-                zeros = zeros.repeat(rot.shape[0], 1, 1)
-                if rot.shape[0] > 1 and self._matrix.shape[0] == 1:
-                    self._matrix = self._matrix.repeat(rot.shape[0], 1, 1)
-            rot_h = torch.cat((rot, zeros), dim=-2).reshape(-1, 4, 3)
-            self._matrix = torch.cat((rot_h, self._matrix[:, :, 3].reshape(-1, 4, 1)), dim=-1)
-
-        self._lu = None
-        self.device = device
-        self.dtype = self._matrix.dtype
+        pass
 
     def __len__(self):
         return self.get_matrix().shape[0]
@@ -240,38 +199,26 @@ class Transform3d:
         Returns:
             A new Transform3d with the stored transforms
         """
-
-        mat = self._matrix
-        for other in others:
-            mat = _broadcast_bmm(mat, other.get_matrix())
-
-        out = Transform3d(device=self.device, dtype=self.dtype, matrix=mat)
-        return out
+        pass
 
     def get_matrix(self):
         """
         Return the Nx4x4 homogeneous transformation matrix represented by this object.
         """
-        return self._matrix
+        pass
 
     def _get_matrix_inverse(self):
         """
         Return the inverse of self._matrix.
         """
-
-        return self._invert_transformation_matrix(self._matrix)
+        pass
 
     @staticmethod
     def _invert_transformation_matrix(T):
         """
         Invert homogeneous transformation matrix.
         """
-        Tinv = T.clone()
-        R = T[:, :3, :3]
-        t = T[:, :3, 3]
-        Tinv[:, :3, :3] = R.transpose(1, 2)
-        Tinv[:, :3, 3:] = -Tinv[:, :3, :3] @ t.unsqueeze(-1)
-        return Tinv
+        pass
 
     def inverse(self, invert_composed: bool = False):
         """
@@ -285,18 +232,10 @@ class Transform3d:
             A new Transform3D object containing the inverse of the original
             transformation.
         """
-
-        i_matrix = self._get_matrix_inverse()
-
-        tinv = Transform3d(matrix=i_matrix, device=self.device)
-
-        return tinv
+        pass
 
     def stack(self, *others):
-        transforms = [self] + list(others)
-        matrix = torch.cat([t._matrix for t in transforms], dim=0)
-        out = Transform3d(matrix=matrix, device=self.device, dtype=self.dtype)
-        return out
+        pass
 
     def transform_points(self, points, eps: Optional[float] = None, batch_to_batch=False):
         """
@@ -319,34 +258,7 @@ class Transform3d:
             points_out: points of shape (N, P, 3) or (P, 3) depending
             on the dimensions of the transform
         """
-        points_batch = points
-        if points_batch.dim() == 2:
-            points_batch = points_batch[None]  # (P, 3) -> (1, P, 3)
-        if points_batch.dim() != 3:
-            msg = "Expected points to have dim = 2 or dim = 3: got shape %r"
-            raise ValueError(msg % repr(points.shape))
-
-        N, P, _3 = points_batch.shape
-        ones = torch.ones(N, P, 1, dtype=points.dtype, device=points.device)
-        points_batch = torch.cat([points_batch, ones], dim=2)
-
-        composed_matrix = self.get_matrix().transpose(-1, -2)
-        if batch_to_batch:
-            points_out = linalg.batch_batch_product(points_batch, composed_matrix)
-        else:
-            points_out = _broadcast_bmm(points_batch, composed_matrix)
-        denom = points_out[..., 3:]  # denominator
-        if eps is not None:
-            denom_sign = denom.sign() + (denom == 0.0).type_as(denom)
-            denom = denom_sign * torch.clamp(denom.abs(), eps)
-        points_out = points_out[..., :3] / denom
-
-        # When transform is (1, 4, 4) and points is (P, 3) return
-        # points_out of shape (P, 3)
-        if points_out.shape[0] == 1 and points.dim() == 2:
-            points_out = points_out.reshape(points.shape)
-
-        return points_out
+        pass
 
     def transform_normals(self, normals, batch_to_batch=False):
         """
@@ -361,27 +273,7 @@ class Transform3d:
             normals_out: Tensor of shape (P, 3) or (N, P, 3) depending
             on the dimensions of the transform
         """
-        if normals.dim() not in [2, 3]:
-            msg = "Expected normals to have dim = 2 or dim = 3: got shape %r"
-            raise ValueError(msg % (normals.shape,))
-        mat = self.inverse().get_matrix()[:, :3, :3]
-
-        if batch_to_batch:
-            normals_out = linalg.batch_batch_product(normals, mat)
-        else:
-            normals_out = _broadcast_bmm(normals, mat)
-
-        # This doesn't pass unit tests. TODO investigate further
-        # if self._lu is None:
-        #     self._lu = self._matrix[:, :3, :3].transpose(1, 2).lu()
-        # normals_out = normals.lu_solve(*self._lu)
-
-        # When transform is (1, 4, 4) and normals is (P, 3) return
-        # normals_out of shape (P, 3)
-        if normals_out.shape[0] == 1 and normals.dim() == 2:
-            normals_out = normals_out.reshape(normals.shape)
-
-        return normals_out
+        pass
 
     def transform_shape_operator(self, shape_operators):
         """
@@ -404,18 +296,13 @@ class Transform3d:
         pass
 
     def rotate(self, *args, **kwargs):
-        return self.compose(Rotate(device=self.device, *args, **kwargs))
+        pass
 
     def rotate_axis_angle(self, *args, **kwargs):
-        return self.compose(RotateAxisAngle(device=self.device, *args, **kwargs))
+        pass
 
     def sample_perturbations(self, num_perturbations, radian_sigma, translation_sigma):
-        mat = self.get_matrix()
-        if mat.shape[0] == 1:
-            mat = mat[0]
-        all_mats = sample_perturbations(mat, num_perturbations, radian_sigma, translation_sigma)
-        out = Transform3d(matrix=all_mats)
-        return out
+        pass
 
     def clone(self):
         """
@@ -425,11 +312,7 @@ class Transform3d:
         Returns:
             new Transforms object.
         """
-        other = Transform3d(dtype=self.dtype, device=self.device)
-        if self._lu is not None:
-            other._lu = [elem.clone() for elem in self._lu]
-        other._matrix = self._matrix.clone()
-        return other
+        pass
 
     def to(self, device, copy: bool = False, dtype=None):
         """
@@ -448,16 +331,10 @@ class Transform3d:
         Returns:
           Transform3d object.
         """
-        if not copy and (dtype is None or self.dtype == dtype) and self.device == device:
-            return self
-        other = self.clone()
-        other.device = device
-        other.dtype = dtype if dtype is not None else other.dtype
-        other._matrix = self._matrix.to(device=device, dtype=dtype)
-        return other
+        pass
 
     def cpu(self):
-        return self.to(torch.device("cpu"))
+        pass
 
     def cuda(self):
         pass
@@ -491,10 +368,7 @@ class Translate(Transform3d):
         """
         Return the inverse of self._matrix.
         """
-        inv_mask = self._matrix.new_ones([1, 4, 4])
-        inv_mask[0, :3, 3] = -1.0
-        i_matrix = self._matrix * inv_mask
-        return i_matrix
+        pass
 
 
 class Scale(Transform3d):
@@ -531,10 +405,7 @@ class Scale(Transform3d):
         """
         Return the inverse of self._matrix.
         """
-        xyz = torch.stack([self._matrix[:, i, i] for i in range(4)], dim=1)
-        ixyz = 1.0 / xyz
-        imat = torch.diag_embed(ixyz, dim1=1, dim2=2)
-        return imat
+        pass
 
 
 class Rotate(Transform3d):
@@ -550,33 +421,13 @@ class Rotate(Transform3d):
             orthogonal_tol: tolerance for the test of the orthogonality of R
 
         """
-        super().__init__(device=device)
-        if not torch.is_tensor(R):
-            R = torch.tensor(R, dtype=dtype, device=device)
-        R = R.to(dtype=dtype).to(device=device)
-        if R.shape[-1] == 4:
-            R = quaternion_to_matrix(R)
-        elif R.shape[-1] == 3 and (len(R.shape) == 1 or R.shape[-2] != 3):
-            R = euler_angles_to_matrix(R, DEFAULT_EULER_CONVENTION)
-        else:
-            _check_valid_rotation_matrix(R.view(-1, 3, 3), tol=orthogonal_tol)
-        if R.dim() == 2:
-            R = R[None]
-
-        if R.shape[-2:] != (3, 3):
-            msg = "R must have shape (3, 3) or (N, 3, 3); got %s"
-            raise ValueError(msg % repr(R.shape))
-        N = R.shape[0]
-        mat = torch.eye(4, dtype=dtype, device=device)
-        mat = mat.view(1, 4, 4).repeat(N, 1, 1)
-        mat[:, :3, :3] = R
-        self._matrix = mat
+        pass
 
     def _get_matrix_inverse(self):
         """
         Return the inverse of self._matrix.
         """
-        return self._matrix.permute(0, 2, 1).contiguous()
+        pass
 
 
 class RotateAxisAngle(Rotate):
@@ -605,18 +456,7 @@ class RotateAxisAngle(Rotate):
                 to rotate.
                 NOTE: All batch elements are rotated about the same axis.
         """
-        axis = axis.upper()
-        if axis not in ["X", "Y", "Z"]:
-            msg = "Expected axis to be one of ['X', 'Y', 'Z']; got %s"
-            raise ValueError(msg % axis)
-        angle = _handle_angle_input(angle, dtype, device, "RotateAxisAngle")
-        angle = (angle / 180.0 * math.pi) if degrees else angle
-        # We assume the points on which this transformation will be applied
-        # are row vectors. The rotation matrix returned from _axis_angle_rotation
-        # is for transforming column vectors. Therefore we transpose this matrix.
-        # R will always be of shape (N, 3, 3)
-        R = _axis_angle_rotation(axis, angle)
-        super().__init__(device=device, R=R)
+        pass
 
 
 def _handle_coord(c, dtype, device):
@@ -691,19 +531,7 @@ def _broadcast_bmm(a, b):
     expect that either M = 1 or N = 1. The tensor with batch dimension 1 is
     expanded to have shape N or M.
     """
-    if a.dim() == 2:
-        a = a[None]
-    if len(a) != len(b):
-        if not ((len(a) == 1) or (len(b) == 1)):
-            msg = "Expected batch dim for bmm to be equal or 1; got %r, %r"
-            raise ValueError(msg % (a.shape, b.shape))
-        if len(a) == 1:
-            a = a.expand(len(b), -1, -1)
-        if len(b) == 1:
-            b = b.expand(len(a), -1, -1)
-    if a.dtype != b.dtype:
-        b = b.to(dtype=a.dtype)
-    return a.bmm(b)
+    pass
 
 
 def _check_valid_rotation_matrix(R, tol: float = 1e-7):
