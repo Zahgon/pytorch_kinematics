@@ -27,7 +27,7 @@ def reflect(cls, *args, **kwargs):
 # How to incorporate line number and all that jazz?
 def on_error_stderr(message):
     """ What to do on an error. This can be changed to raise an exception. """
-    sys.stderr.write(message + '\n')
+    pass
 
 
 on_error = on_error_stderr
@@ -139,10 +139,10 @@ class ValueType(object):
         the 'axis' element.
         @todo Add function that makes an XML node completely independently?
         """
-        node.text = self.to_string(value)
+        pass
 
     def equals(self, a, b):
-        return a == b
+        pass
 
 
 class BasicType(ValueType):
@@ -150,7 +150,7 @@ class BasicType(ValueType):
         self.type = cur_type
 
     def to_string(self, value):
-        return str(value)
+        pass
 
     def from_string(self, value):
         return self.type(value)
@@ -158,13 +158,13 @@ class BasicType(ValueType):
 
 class ListType(ValueType):
     def to_string(self, values):
-        return ' '.join(values)
+        pass
 
     def from_string(self, text):
         return text.split()
 
     def equals(self, aValues, bValues):
-        return len(aValues) == len(bValues) and all(a == b for (a, b) in zip(aValues, bValues))  # noqa
+        pass
 
 
 class VectorType(ListType):
@@ -176,9 +176,7 @@ class VectorType(ListType):
             assert len(values) == self.count, "Invalid vector length"
 
     def to_string(self, values):
-        self.check(values)
-        raw = list(map(str, values))
-        return ListType.to_string(self, raw)
+        pass
 
     def from_string(self, text):
         raw = ListType.from_string(self, text)
@@ -197,11 +195,7 @@ class RawType(ValueType):
     def write_xml(self, node, value):
         # @todo rying to insert an element at root level seems to screw up
         # pretty printing
-        children = xml_children(value)
-        list(map(node.append, children))
-        # Copy attributes
-        for (attrib_key, attrib_value) in value.attrib.items():
-            node.set(attrib_key, attrib_value)
+        pass
 
 
 class SimpleElementType(ValueType):
@@ -219,8 +213,7 @@ class SimpleElementType(ValueType):
         return self.value_type.from_string(text)
 
     def write_xml(self, node, value):
-        text = self.value_type.to_string(value)
-        node.set(self.attribute, text)
+        pass
 
 
 class ObjectType(ValueType):
@@ -233,7 +226,7 @@ class ObjectType(ValueType):
         return obj
 
     def write_xml(self, node, obj):
-        obj.write_xml(node)
+        pass
 
 
 class FactoryType(ValueType):
@@ -253,14 +246,10 @@ class FactoryType(ValueType):
         return value_type.from_xml(node, path)
 
     def get_name(self, obj):
-        cur_type = type(obj)
-        name = self.nameMap.get(cur_type)
-        if name is None:
-            raise Exception("Invalid {} type: {}".format(self.name, cur_type))
-        return name
+        pass
 
     def write_xml(self, node, obj):
-        obj.write_xml(node)
+        pass
 
 
 class DuckTypedFactory(ValueType):
@@ -283,7 +272,7 @@ class DuckTypedFactory(ValueType):
             raise ParseError(Exception(out), path)
 
     def write_xml(self, node, obj):
-        obj.write_xml(node)
+        pass
 
 
 class Param(object):
@@ -333,16 +322,7 @@ class Attribute(Param):
         return getattr(obj, self.var)
 
     def add_to_xml(self, obj, node):
-        value = getattr(obj, self.var)
-        # Do not set with default value if value is None
-        if value is None:
-            if self.required:
-                raise Exception("Required attribute not set in object: {}".format(self.var))  # noqa
-            elif not skip_default:
-                value = self.default
-        # Allow value type to handle None?
-        if value is not None:
-            node.set(self.xml_var, self.value_type.to_string(value))
+        pass
 
 
 # Add option if this requires a header?
@@ -362,21 +342,10 @@ class Element(Param):
         setattr(obj, self.var, value)
 
     def add_to_xml(self, obj, parent):
-        value = getattr(obj, self.xml_var)
-        if value is None:
-            if self.required:
-                raise Exception("Required element not defined in object: {}".format(self.var))  # noqa
-            elif not skip_default:
-                value = self.default
-        if value is not None:
-            self.add_scalar_to_xml(parent, value)
+        pass
 
     def add_scalar_to_xml(self, parent, value):
-        if self.is_raw:
-            node = parent
-        else:
-            node = node_add(parent, self.xml_var)
-        self.value_type.write_xml(node, value)
+        pass
 
 
 class AggregateElement(Element):
@@ -549,15 +518,7 @@ class Reflection(object):
         return path
 
     def add_to_xml(self, obj, node):
-        if self.parent:
-            self.parent.add_to_xml(obj, node)
-        for attribute in self.attributes:
-            attribute.add_to_xml(obj, node)
-        for element in self.scalars:
-            element.add_to_xml(obj, node)
-        # Now add in aggregates
-        if self.aggregates:
-            obj.add_aggregates_to_xml(node)
+        pass
 
 
 class Object(YamlReflection):
@@ -565,7 +526,7 @@ class Object(YamlReflection):
     XML_REFL = None
 
     def get_refl_vars(self):
-        return self.XML_REFL.vars
+        pass
 
     def check_valid(self):
         pass
@@ -577,20 +538,14 @@ class Object(YamlReflection):
 
     def write_xml(self, node):
         """ Adds contents directly to XML node """
-        self.check_valid()
-        self.pre_write_xml()
-        self.XML_REFL.add_to_xml(self, node)
+        pass
 
     def to_xml(self):
         """ Creates an overarching tag and adds its contents to the node """
-        tag = self.XML_REFL.tag
-        assert tag is not None, "Must define 'tag' in reflection to use this function"  # noqa
-        doc = etree.Element(tag)
-        self.write_xml(doc)
-        return doc
+        pass
 
     def to_xml_string(self, addHeader=True):
-        return xml_string(self.to_xml(), addHeader)
+        pass
 
     def post_read_xml(self):
         pass
@@ -618,8 +573,7 @@ class Object(YamlReflection):
 
     @classmethod
     def from_xml_file(cls, file_path):
-        xml_string = open(file_path, 'r').read()
-        return cls.from_xml_string(xml_string)
+        pass
 
     # Confusing distinction between loading code in object and reflection
     # registry thing...
@@ -632,9 +586,7 @@ class Object(YamlReflection):
 
     def aggregate_init(self):
         """ Must be called in constructor! """
-        self.aggregate_order = []
-        # Store this info in the loaded object??? Nah
-        self.aggregate_type = {}
+        pass
 
     def add_aggregate(self, xml_var, obj):
         """ NOTE: One must keep careful track of aggregate types for this system.
@@ -644,31 +596,19 @@ class Object(YamlReflection):
         self.aggregate_type[obj] = xml_var
 
     def add_aggregates_to_xml(self, node):
-        for value in self.aggregate_order:
-            typeName = self.aggregate_type[value]
-            element = self.XML_REFL.element_map[typeName]
-            element.add_scalar_to_xml(node, value)
+        pass
 
     def remove_aggregate(self, obj):
-        self.aggregate_order.remove(obj)
-        xml_var = self.aggregate_type[obj]
-        del self.aggregate_type[obj]
-        self.get_aggregate_list(xml_var).remove(obj)
+        pass
 
     def lump_aggregates(self):
         """ Put all aggregate types together, just because """
-        self.aggregate_init()
-        for param in self.XML_REFL.aggregates:
-            for obj in self.get_aggregate_list(param.xml_var):
-                self.add_aggregate(param.var, obj)
+        pass
 
     """ Compatibility """
 
     def parse(self, xml_string):
-        node = etree.fromstring(xml_string)
-        path = Path(self.XML_REFL.tag, tree=etree.ElementTree(node))
-        self.read_xml(node, path)
-        return self
+        pass
 
 
 # Really common types

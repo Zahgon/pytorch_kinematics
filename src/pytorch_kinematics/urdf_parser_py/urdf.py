@@ -24,16 +24,16 @@ class Pose(xmlr.Object):
 
     # Aliases for backwards compatibility
     @property
-    def rotation(self): return self.rpy
+    pass
 
     @rotation.setter
-    def rotation(self, value): self.rpy = value
+    pass
 
     @property
-    def position(self): return self.xyz
+    pass
 
     @position.setter
-    def position(self, value): self.xyz = value
+    pass
 
 
 xmlr.reflect(Pose, tag='origin', params=[
@@ -149,9 +149,7 @@ class GeometricType(xmlr.ValueType):
         return self.factory.from_xml(children[0], path=path)
 
     def write_xml(self, node, obj):
-        name = self.factory.get_name(obj)
-        child = node_add(node, name)
-        obj.write_xml(child)
+        pass
 
 
 xmlr.add_type('geometric', GeometricType())
@@ -228,10 +226,7 @@ class Inertia(xmlr.Object):
         self.izz = izz
 
     def to_matrix(self):
-        return [
-            [self.ixx, self.ixy, self.ixz],
-            [self.ixy, self.iyy, self.iyz],
-            [self.ixz, self.iyz, self.izz]]
+        pass
 
 
 xmlr.reflect(Inertia, tag='inertia',
@@ -339,10 +334,10 @@ class Joint(xmlr.Object):
 
     # Aliases
     @property
-    def joint_type(self): return self.type
+    pass
 
     @joint_type.setter
-    def joint_type(self, value): self.type = value
+    pass
 
 
 xmlr.reflect(Joint, tag='joint', params=[
@@ -372,27 +367,19 @@ class Link(xmlr.Object):
 
     def __get_visual(self):
         """Return the first visual or None."""
-        if self.visuals:
-            return self.visuals[0]
+        pass
 
     def __set_visual(self, visual):
         """Set the first visual."""
-        if self.visuals:
-            self.visuals[0] = visual
-        else:
-            self.visuals.append(visual)
+        pass
 
     def __get_collision(self):
         """Return the first collision or None."""
-        if self.collisions:
-            return self.collisions[0]
+        pass
 
     def __set_collision(self, collision):
         """Set the first collision."""
-        if self.collisions:
-            self.collisions[0] = collision
-        else:
-            self.collisions.append(collision)
+        pass
 
     # Properties for backwards compatibility
     visual = property(__get_visual, __set_visual)
@@ -514,35 +501,16 @@ class Robot(xmlr.Object):
             self.link_map[link.name] = link
 
     def add_link(self, link):
-        self.add_aggregate('link', link)
+        pass
 
     def add_joint(self, joint):
-        self.add_aggregate('joint', joint)
+        pass
 
     def get_chain(self, root, tip, joints=True, links=True, fixed=True):
-        chain = []
-        if links:
-            chain.append(tip)
-        link = tip
-        while link != root:
-            (joint, parent) = self.parent_map[link]
-            if joints:
-                if fixed or self.joint_map[joint].joint_type != 'fixed':
-                    chain.append(joint)
-            if links:
-                chain.append(parent)
-            link = parent
-        chain.reverse()
-        return chain
+        pass
 
     def get_root(self):
-        root = None
-        for link in self.link_map:
-            if link not in self.parent_map:
-                assert root is None, "Multiple roots detected, invalid URDF."
-                root = link
-        assert root is not None, "No roots detected, invalid URDF."
-        return root
+        pass
 
     @classmethod
     def from_parameter_server(cls, key='robot_description'):
@@ -552,9 +520,7 @@ class Robot(xmlr.Object):
 
         Warning: this requires roscore to be running.
         """
-        # Could move this into xml_reflection
-        import rospy
-        return cls.from_xml_string(rospy.get_param(key))
+        pass
 
 
 xmlr.reflect(Robot, tag='robot', params=[

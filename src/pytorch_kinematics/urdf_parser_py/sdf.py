@@ -21,10 +21,7 @@ class Inertia(xmlr.Object):
         self.izz = izz
 
     def to_matrix(self):
-        return [
-            [self.ixx, self.ixy, self.ixz],
-            [self.ixy, self.iyy, self.iyz],
-            [self.ixz, self.iyz, self.izz]]
+        pass
 
 
 xmlr.reflect(Inertia,
@@ -108,9 +105,7 @@ class GeometricType(xmlr.ValueType):
         return self.factory.from_xml(children[0], path=path)
 
     def write_xml(self, node, obj):
-        name = self.factory.get_name(obj)
-        child = node_add(node, name)
-        obj.write_xml(child)
+        pass
 
 
 xmlr.add_type('geometric', GeometricType())
@@ -226,10 +221,10 @@ class Joint(xmlr.Object):
 
     # Aliases
     @property
-    def joint_type(self): return self.type
+    pass
 
     @joint_type.setter
-    def joint_type(self, value): self.type = value
+    pass
 
 
 xmlr.reflect(Joint, tag='joint', params=[
@@ -292,10 +287,10 @@ class Model(xmlr.Object):
             self.link_map[link.name] = link
 
     def add_link(self, link):
-        self.add_aggregate('link', link)
+        pass
 
     def add_joint(self, joint):
-        self.add_aggregate('joint', joint)
+        pass
 
 
 xmlr.reflect(Model, tag='model', params=[

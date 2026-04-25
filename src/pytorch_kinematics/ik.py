@@ -31,40 +31,7 @@ def _ik_step_kernel(m_flat: torch.Tensor, target_pos: torch.Tensor, target_wxyz:
         dq: Joint velocity (N*M, DOF, 1)
         dx: Pose error (N*M, 6, 1)
     """
-    NM = m_flat.shape[0]
-    M = num_retries
-    N = NM // M
-    m = m_flat.view(N, M, 4, 4)
-
-    # delta_pose
-    pos_diff = (target_pos.unsqueeze(1) - m[:, :, :3, 3]).view(-1, 3, 1)
-    cur_wxyz = rotation_conversions.matrix_to_quaternion(m[:, :, :3, :3])
-    diff_wxyz = rotation_conversions.quaternion_multiply(
-        target_wxyz.unsqueeze(1),
-        rotation_conversions.quaternion_invert(cur_wxyz))
-    diff_axis_angle = rotation_conversions.quaternion_to_axis_angle(diff_wxyz)
-    rot_diff = diff_axis_angle.view(-1, 3, 1)
-    dx = torch.cat((pos_diff, rot_diff), dim=1)
-
-    # Apply per-coordinate weighting: W @ J, W @ dx
-    if task_weight is not None:
-        w = task_weight.reshape(1, 6, 1)  # (1, 6, 1)
-        J_w = w * J       # (NM, 6, DOF) weighted Jacobian
-        dx_w = w * dx     # (NM, 6, 1) weighted error
-    else:
-        J_w = J
-        dx_w = dx
-
-    # DLS with adaptive Levenberg-Marquardt damping:
-    # reg = lambda^2 * I + lm_damping * ||dx_w||^2 * I
-    if lm_damping > 0.0:
-        mu = lm_damping * (dx_w * dx_w).sum(dim=1, keepdim=True)  # (NM, 1, 1)
-        tmpA = J_w @ J_w.transpose(1, 2) + reg_matrix + mu * torch.eye(6, device=J.device, dtype=J.dtype)
-    else:
-        tmpA = J_w @ J_w.transpose(1, 2) + reg_matrix
-    A = torch.linalg.solve(tmpA, dx_w)
-    dq = J_w.transpose(1, 2) @ A
-    return dq, dx
+    pass
 
 
 def _ik_step_kernel_svd(m_flat: torch.Tensor, target_pos: torch.Tensor, target_wxyz: torch.Tensor,
@@ -89,44 +56,7 @@ def _ik_step_kernel_svd(m_flat: torch.Tensor, target_pos: torch.Tensor, target_w
         dq: Joint velocity (N*M, DOF, 1)
         dx: Pose error (N*M, 6, 1)
     """
-    NM = m_flat.shape[0]
-    M = num_retries
-    N = NM // M
-    m = m_flat.view(N, M, 4, 4)
-
-    # delta_pose (same as _ik_step_kernel)
-    pos_diff = (target_pos.unsqueeze(1) - m[:, :, :3, 3]).view(-1, 3, 1)
-    cur_wxyz = rotation_conversions.matrix_to_quaternion(m[:, :, :3, :3])
-    diff_wxyz = rotation_conversions.quaternion_multiply(
-        target_wxyz.unsqueeze(1),
-        rotation_conversions.quaternion_invert(cur_wxyz))
-    diff_axis_angle = rotation_conversions.quaternion_to_axis_angle(diff_wxyz)
-    rot_diff = diff_axis_angle.view(-1, 3, 1)
-    dx = torch.cat((pos_diff, rot_diff), dim=1)
-
-    # Apply per-coordinate weighting
-    if task_weight is not None:
-        w = task_weight.reshape(1, 6, 1)
-        J_w = w * J
-        dx_w = w * dx
-    else:
-        J_w = J
-        dx_w = dx
-
-    # SVD-based DLS
-    regularization = reg_matrix[0, 0]  # scalar lambda^2
-    if lm_damping > 0.0:
-        mu = lm_damping * (dx_w * dx_w).sum(dim=1, keepdim=True).squeeze(2)  # (NM, 1)
-        regularization = regularization + mu
-    U, D, Vh = torch.linalg.svd(J_w)
-    m_sv = D.shape[1]
-    denom = D ** 2 + regularization
-    prod = D / denom
-    inverted = torch.diag_embed(prod)
-    Vh = Vh[:, :m_sv, :]
-    total = Vh.transpose(1, 2) @ inverted @ U.transpose(1, 2)
-    dq = total @ dx_w
-    return dq, dx
+    pass
 
 
 class IKSolution:
@@ -200,10 +130,7 @@ class IKSolution:
 
 # helper config sampling method
 def gaussian_around_config(config: torch.Tensor, std: float) -> Callable[[int], torch.Tensor]:
-    def config_sampling_method(num_configs):
-        return torch.randn(num_configs, config.shape[0], dtype=config.dtype, device=config.device) * std + config
-
-    return config_sampling_method
+    pass
 
 
 class LineSearch:

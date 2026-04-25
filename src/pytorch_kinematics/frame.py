@@ -124,10 +124,10 @@ class Frame(object):
         return self
 
     def add_child(self, child):
-        self.children.append(child)
+        pass
 
     def is_end(self):
-        return (len(self.children) == 0)
+        pass
 
     def get_transform(self, theta):
         dtype = self.joint.axis.dtype

@@ -122,9 +122,7 @@ class _FKAnalyticalBackward(torch.autograd.Function):
     @staticmethod
     def forward(ctx, th, T_world_link, dof_frame_indices, dof_ancestor_mask, dof_is_revolute, axes):
         # No FK computation — just save what backward needs and pass through.
-        ctx.save_for_backward(T_world_link, dof_frame_indices, dof_ancestor_mask,
-                              dof_is_revolute, axes)
-        return T_world_link
+        pass
 
     @staticmethod
     def backward(ctx, grad_output):
@@ -200,14 +198,7 @@ def get_batch_size(th):
 
 
 def ensure_2d_tensor(th, dtype, device):
-    if not torch.is_tensor(th):
-        th = torch.tensor(th, dtype=dtype, device=device)
-    if len(th.shape) <= 1:
-        N = 1
-        th = th.reshape(1, -1)
-    else:
-        N = th.shape[0]
-    return th, N
+    pass
 
 
 def get_dict_elem_shape(th_dict):
@@ -381,28 +372,14 @@ class Chain:
 
     @staticmethod
     def _find_frame_recursive(name, frame: Frame) -> Optional[Frame]:
-        for child in frame.children:
-            if child.name == name:
-                return child
-            ret = Chain._find_frame_recursive(name, child)
-            if not ret is None:
-                return ret
-        return None
+        pass
 
     def find_frame(self, name) -> Optional[Frame]:
-        if self._root.name == name:
-            return self._root
-        return self._find_frame_recursive(name, self._root)
+        pass
 
     @staticmethod
     def _find_link_recursive(name, frame) -> Optional[Link]:
-        for child in frame.children:
-            if child.link.name == name:
-                return child.link
-            ret = Chain._find_link_recursive(name, child)
-            if not ret is None:
-                return ret
-        return None
+        pass
 
     @staticmethod
     def _get_joints(frame, exclude_fixed=True):
@@ -428,36 +405,20 @@ class Chain:
 
     @staticmethod
     def _find_joint_recursive(name, frame):
-        for child in frame.children:
-            if child.joint.name == name:
-                return child.joint
-            ret = Chain._find_joint_recursive(name, child)
-            if not ret is None:
-                return ret
-        return None
+        pass
 
     def find_link(self, name) -> Optional[Link]:
-        if self._root.link.name == name:
-            return self._root.link
-        return self._find_link_recursive(name, self._root)
+        pass
 
     def find_joint(self, name):
-        if self._root.joint.name == name:
-            return self._root.joint
-        return self._find_joint_recursive(name, self._root)
+        pass
 
     @staticmethod
     def _get_joint_parent_frame_names(frame, exclude_fixed=True):
-        joint_names = []
-        if not (exclude_fixed and frame.joint.joint_type == "fixed"):
-            joint_names.append(frame.name)
-        for child in frame.children:
-            joint_names.extend(Chain._get_joint_parent_frame_names(child, exclude_fixed))
-        return joint_names
+        pass
 
     def get_joint_parent_frame_names(self, exclude_fixed=True):
-        names = self._get_joint_parent_frame_names(self._root, exclude_fixed)
-        return sorted(set(names), key=names.index)
+        pass
 
     @staticmethod
     def _get_frame_names(frame: Frame, exclude_fixed=True) -> Sequence[str]:
@@ -474,25 +435,17 @@ class Chain:
 
     @staticmethod
     def _get_links(frame):
-        links = [frame.link]
-        for child in frame.children:
-            links.extend(Chain._get_links(child))
-        return links
+        pass
 
     def get_links(self):
-        links = self._get_links(self._root)
-        return links
+        pass
 
     @staticmethod
     def _get_link_names(frame):
-        link_names = [frame.link.name]
-        for child in frame.children:
-            link_names.extend(Chain._get_link_names(child))
-        return link_names
+        pass
 
     def get_link_names(self):
-        names = self._get_link_names(self._root)
-        return sorted(set(names), key=names.index)
+        pass
 
     @lru_cache
     def get_frame_indices(self, *frame_names):
@@ -631,20 +584,10 @@ class Chain:
 
     @staticmethod
     def _get_joints_and_child_links(frame):
-        joint = frame.joint
-
-        me_and_my_children = [frame.link]
-        for child in frame.children:
-            recursive_child_links = yield from Chain._get_joints_and_child_links(child)
-            me_and_my_children.extend(recursive_child_links)
-
-        if joint is not None and joint.joint_type != 'fixed':
-            yield joint, me_and_my_children
-
-        return me_and_my_children
+        pass
 
     def get_joints_and_child_links(self):
-        yield from Chain._get_joints_and_child_links(self._root)
+        pass
 
 
 class SerialChain(Chain):

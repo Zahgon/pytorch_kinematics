@@ -395,24 +395,13 @@ class Transform3d:
             shape_operators_out: Tensor of shape (P, 3, 3) or (N, P, 3, 3) depending
             on the dimensions of the transform
         """
-        if shape_operators.dim() not in [3, 4]:
-            msg = "Expected shape_operators to have dim = 3 or dim = 4: got shape %r"
-            raise ValueError(msg % (shape_operators.shape,))
-        mat = self.inverse().get_matrix()[:, :3, :3]
-        shape_operators_out = _broadcast_bmm(mat.permute(0, 2, 1), _broadcast_bmm(shape_operators, mat))
-
-        # When transform is (1, 4, 4) and shape_operator is (P, 3, 3) return
-        # shape_operators_out of shape (P, 3, 3)
-        if shape_operators_out.shape[0] == 1 and shape_operators.dim() == 3:
-            shape_operators_out = shape_operators_out.reshape(shape_operators.shape)
-
-        return shape_operators_out
+        pass
 
     def translate(self, *args, **kwargs):
-        return self.compose(Translate(device=self.device, *args, **kwargs))
+        pass
 
     def scale(self, *args, **kwargs):
-        return self.compose(Scale(device=self.device, *args, **kwargs))
+        pass
 
     def rotate(self, *args, **kwargs):
         return self.compose(Rotate(device=self.device, *args, **kwargs))
@@ -471,7 +460,7 @@ class Transform3d:
         return self.to(torch.device("cpu"))
 
     def cuda(self):
-        return self.to(torch.device("cuda"))
+        pass
 
 
 class Translate(Transform3d):
@@ -640,11 +629,7 @@ def _handle_coord(c, dtype, device):
     Returns:
         c_vec: 1D torch tensor
     """
-    if not torch.is_tensor(c):
-        c = torch.tensor(c, dtype=dtype, device=device)
-    if c.dim() == 0:
-        c = c.view(1)
-    return c
+    pass
 
 
 def _handle_input(x, y, z, dtype, device, name: str, allow_singleton: bool = False):
@@ -675,33 +660,7 @@ def _handle_input(x, y, z, dtype, device, name: str, allow_singleton: bool = Fal
     Returns:
         xyz: Tensor of shape (N, 3)
     """
-    # If x is actually a tensor of shape (N, 3) then just return it
-    if torch.is_tensor(x) and x.dim() == 2:
-        if x.shape[1] != 3:
-            msg = "Expected tensor of shape (N, 3); got %r (in %s)"
-            raise ValueError(msg % (x.shape, name))
-        if y is not None or z is not None:
-            msg = "Expected y and z to be None (in %s)" % name
-            raise ValueError(msg)
-        return x
-
-    if allow_singleton and y is None and z is None:
-        y = x
-        z = x
-
-    # Convert all to 1D tensors
-    xyz = [_handle_coord(c, dtype, device) for c in [x, y, z]]
-
-    # Broadcast and concatenate
-    sizes = [c.shape[0] for c in xyz]
-    N = max(sizes)
-    for c in xyz:
-        if c.shape[0] != 1 and c.shape[0] != N:
-            msg = "Got non-broadcastable sizes %r (in %s)" % (sizes, name)
-            raise ValueError(msg)
-    xyz = [c.expand(N) for c in xyz]
-    xyz = torch.stack(xyz, dim=1)
-    return xyz
+    pass
 
 
 def _handle_angle_input(x, dtype, device: str, name: str):
@@ -714,11 +673,7 @@ def _handle_angle_input(x, dtype, device: str, name: str):
         - Python scalar
         - Torch scalar
     """
-    if torch.is_tensor(x) and x.dim() > 1:
-        msg = "Expected tensor of shape (N,); got %r (in %s)"
-        raise ValueError(msg % (x.shape, name))
-    else:
-        return _handle_coord(x, dtype, device)
+    pass
 
 
 def _broadcast_bmm(a, b):
@@ -766,15 +721,4 @@ def _check_valid_rotation_matrix(R, tol: float = 1e-7):
 
     Emits a warning if R is an invalid rotation matrix.
     """
-    if torch.compiler.is_compiling():
-        return
-    N = R.shape[0]
-    eye = torch.eye(3, dtype=R.dtype, device=R.device)
-    eye = eye.view(1, 3, 3).expand(N, -1, -1)
-    orthogonal = torch.allclose(R.bmm(R.transpose(1, 2)), eye, atol=tol)
-    det_R = torch.det(R)
-    no_distortion = torch.allclose(det_R, torch.ones_like(det_R))
-    if not (orthogonal and no_distortion):
-        msg = "R is not a valid rotation matrix"
-        warnings.warn(msg)
-    return
+    pass
