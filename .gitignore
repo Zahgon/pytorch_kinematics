@@ -13,3 +13,6 @@ tests/MUJOCO_LOG.TXT
 tests/mujoco_menagerie/
 .ipynb_checkpoints
 CLAUDE.md
+
+.aider*
+logs/
