@@ -355,14 +355,7 @@ class Translate(Transform3d):
                 - A torch scalar
                 - A 1D torch tensor
         """
-        super().__init__(device=device)
-        xyz = _handle_input(x, y, z, dtype, device, "Translate")
-        N = xyz.shape[0]
-
-        mat = torch.eye(4, dtype=dtype, device=device)
-        mat = mat.view(1, 4, 4).repeat(N, 1, 1)
-        mat[:, :3, 3] = xyz
-        self._matrix = mat
+        pass
 
     def _get_matrix_inverse(self):
         """
@@ -389,17 +382,7 @@ class Scale(Transform3d):
                 - torch scalar
                 - 1D torch tensor
         """
-        super().__init__(device=device)
-        xyz = _handle_input(x, y, z, dtype, device, "scale", allow_singleton=True)
-        N = xyz.shape[0]
-
-        # TODO: Can we do this all in one go somehow?
-        mat = torch.eye(4, dtype=dtype, device=device)
-        mat = mat.view(1, 4, 4).repeat(N, 1, 1)
-        mat[:, 0, 0] = xyz[:, 0]
-        mat[:, 1, 1] = xyz[:, 1]
-        mat[:, 2, 2] = xyz[:, 2]
-        self._matrix = mat
+        pass
 
     def _get_matrix_inverse(self):
         """

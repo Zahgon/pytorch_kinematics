@@ -24,19 +24,19 @@ class Pose(xmlr.Object):
     # Aliases for backwards compatibility
     @property
     def rotation(self):
-        return self.rpy
+        pass
 
     @rotation.setter
     def rotation(self, value):
-        self.rpy = value
+        pass
 
     @property
     def position(self):
-        return self.xyz
+        pass
 
     @position.setter
     def position(self, value):
-        self.xyz = value
+        pass
 
 
 xmlr.reflect(
@@ -383,11 +383,11 @@ class Joint(xmlr.Object):
     # Aliases
     @property
     def joint_type(self):
-        return self.type
+        pass
 
     @joint_type.setter
     def joint_type(self, value):
-        self.type = value
+        pass
 
 
 xmlr.reflect(
@@ -413,12 +413,7 @@ class Link(xmlr.Object):
     def __init__(
         self, name=None, visual=None, inertial=None, collision=None, origin=None
     ):
-        self.aggregate_init()
-        self.name = name
-        self.visuals = []
-        self.inertial = inertial
-        self.collisions = []
-        self.origin = origin
+        pass
 
     def __get_visual(self):
         """Return the first visual or None."""
@@ -493,9 +488,7 @@ xmlr.reflect(
 
 class TransmissionJoint(xmlr.Object):
     def __init__(self, name=None):
-        self.aggregate_init()
-        self.name = name
-        self.hardwareInterfaces = []
+        pass
 
     def check_valid(self):
         pass
@@ -515,10 +508,7 @@ class Transmission(xmlr.Object):
     """New format: http://wiki.ros.org/urdf/XML/Transmission"""
 
     def __init__(self, name=None):
-        self.aggregate_init()
-        self.name = name
-        self.joints = []
-        self.actuators = []
+        pass
 
     def check_valid(self):
         pass
@@ -543,20 +533,7 @@ xmlr.add_type(
 
 class Robot(xmlr.Object):
     def __init__(self, name=None):
-        self.aggregate_init()
-
-        self.name = name
-        self.joints = []
-        self.links = []
-        self.materials = []
-        self.gazebos = []
-        self.transmissions = []
-
-        self.joint_map = {}
-        self.link_map = {}
-
-        self.parent_map = {}
-        self.child_map = {}
+        pass
 
     def add_aggregate(self, typeName, elem):
         pass

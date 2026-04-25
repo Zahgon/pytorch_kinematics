@@ -7,12 +7,19 @@ import torch
 from matplotlib import pyplot as plt, cm as cm
 
 # Check if torch.compile is available (PyTorch 2.0+)
-_TORCH_COMPILE_AVAILABLE = hasattr(torch, 'compile') and torch.__version__ >= '2.0'
+_TORCH_COMPILE_AVAILABLE = hasattr(torch, "compile") and torch.__version__ >= "2.0"
 
 
-def _ik_step_kernel(m_flat: torch.Tensor, target_pos: torch.Tensor, target_wxyz: torch.Tensor,
-                    J: torch.Tensor, reg_matrix: torch.Tensor, num_retries: int,
-                    lm_damping: float = 0.0, task_weight: Optional[torch.Tensor] = None):
+def _ik_step_kernel(
+    m_flat: torch.Tensor,
+    target_pos: torch.Tensor,
+    target_wxyz: torch.Tensor,
+    J: torch.Tensor,
+    reg_matrix: torch.Tensor,
+    num_retries: int,
+    lm_damping: float = 0.0,
+    task_weight: Optional[torch.Tensor] = None,
+):
     """
     Fused IK step: delta_pose + damped least squares. Compatible with torch.compile(fullgraph=True).
 
@@ -34,9 +41,16 @@ def _ik_step_kernel(m_flat: torch.Tensor, target_pos: torch.Tensor, target_wxyz:
     pass
 
 
-def _ik_step_kernel_svd(m_flat: torch.Tensor, target_pos: torch.Tensor, target_wxyz: torch.Tensor,
-                        J: torch.Tensor, reg_matrix: torch.Tensor, num_retries: int,
-                        lm_damping: float = 0.0, task_weight: Optional[torch.Tensor] = None):
+def _ik_step_kernel_svd(
+    m_flat: torch.Tensor,
+    target_pos: torch.Tensor,
+    target_wxyz: torch.Tensor,
+    J: torch.Tensor,
+    reg_matrix: torch.Tensor,
+    num_retries: int,
+    lm_damping: float = 0.0,
+    task_weight: Optional[torch.Tensor] = None,
+):
     """
     IK step using SVD-based damped least squares. Generally slower than the Cholesky-based
     kernel, but exposes singular values for selective damping if needed.
@@ -60,7 +74,16 @@ def _ik_step_kernel_svd(m_flat: torch.Tensor, target_pos: torch.Tensor, target_w
 
 
 class IKSolution:
-    def __init__(self, dof, num_problems, num_retries, pos_tolerance, rot_tolerance, device="cpu", dtype=None):
+    def __init__(
+        self,
+        dof,
+        num_problems,
+        num_retries,
+        pos_tolerance,
+        rot_tolerance,
+        device="cpu",
+        dtype=None,
+    ):
         self.iterations = 0
         self.device = device
         self.num_problems = num_problems
@@ -71,16 +94,22 @@ class IKSolution:
 
         M = num_problems
         # N x DOF tensor of joint angles; if converged[i] is False, then solutions[i] is undefined
-        self.solutions = torch.zeros((M, self.num_retries, self.dof), device=self.device, dtype=dtype)
+        self.solutions = torch.zeros(
+            (M, self.num_retries, self.dof), device=self.device, dtype=dtype
+        )
         self.remaining = torch.ones(M, dtype=torch.bool, device=self.device)
 
         # M is the total number of problems
         # N is the total number of attempts
         # M x N tensor of position and rotation errors
-        self.err_pos = torch.zeros((M, self.num_retries), device=self.device, dtype=dtype)
+        self.err_pos = torch.zeros(
+            (M, self.num_retries), device=self.device, dtype=dtype
+        )
         self.err_rot = torch.zeros_like(self.err_pos)
         # M x N boolean values indicating whether the solution converged (a solution could be found)
-        self.converged_pos = torch.zeros((M, self.num_retries), dtype=torch.bool, device=self.device)
+        self.converged_pos = torch.zeros(
+            (M, self.num_retries), dtype=torch.bool, device=self.device
+        )
         self.converged_rot = torch.zeros_like(self.converged_pos)
         self.converged = torch.zeros_like(self.converged_pos)
 
@@ -92,52 +121,93 @@ class IKSolution:
     def update_remaining_with_keep_mask(self, keep: torch.tensor):
         pass
 
-    def update(self, q: torch.tensor, err: torch.tensor, use_keep_mask=True, keep_mask=None):
+    def update(
+        self, q: torch.tensor, err: torch.tensor, use_keep_mask=True, keep_mask=None
+    ):
         pass
 
 
 # helper config sampling method
-def gaussian_around_config(config: torch.Tensor, std: float) -> Callable[[int], torch.Tensor]:
+def gaussian_around_config(
+    config: torch.Tensor, std: float
+) -> Callable[[int], torch.Tensor]:
+    def config_sampling_method(num_configs):
+        pass
+
     pass
 
 
 class LineSearch:
-    def do_line_search(self, chain, q, dq, target_pos, target_wxyz, initial_dx, problem_remaining=None,
-                       fk_fn=None, eef_frame_idx=None):
+    def do_line_search(
+        self,
+        chain,
+        q,
+        dq,
+        target_pos,
+        target_wxyz,
+        initial_dx,
+        problem_remaining=None,
+        fk_fn=None,
+        eef_frame_idx=None,
+    ):
         pass
 
 
 class BacktrackingLineSearch(LineSearch):
-    def __init__(self, max_lr=1.0, decrease_factor=0.5, max_iterations=5, sufficient_decrease=0.01):
+    def __init__(
+        self,
+        max_lr=1.0,
+        decrease_factor=0.5,
+        max_iterations=5,
+        sufficient_decrease=0.01,
+    ):
         self.initial_lr = max_lr
         self.decrease_factor = decrease_factor
         self.max_iterations = max_iterations
         self.sufficient_decrease = sufficient_decrease
 
-    def do_line_search(self, chain, q, dq, target_pos, target_wxyz, initial_dx, problem_remaining=None,
-                       fk_fn=None, eef_frame_idx=None):
+    def do_line_search(
+        self,
+        chain,
+        q,
+        dq,
+        target_pos,
+        target_wxyz,
+        initial_dx,
+        problem_remaining=None,
+        fk_fn=None,
+        eef_frame_idx=None,
+    ):
         pass
 
 
 class InverseKinematics:
     """Jacobian follower based inverse kinematics solver"""
 
-    def __init__(self, serial_chain: SerialChain,
-                 pos_tolerance: float = 1e-3, rot_tolerance: float = 1e-2,
-                 retry_configs: Optional[torch.Tensor] = None, num_retries: Optional[int] = None,
-                 joint_limits: Optional[torch.Tensor] = None,
-                 config_sampling_method: Union[str, Callable[[int], torch.Tensor]] = "uniform",
-                 max_iterations: int = 50,
-                 lr: float = 1.0, line_search: Optional[LineSearch] = None,
-                 regularlization: float = 1e-9, lm_damping: float = 0.1,
-                 position_weight: float = 1.0, orientation_weight: float = 1.0,
-                 debug=False,
-                 early_stopping_any_converged=False,
-                 early_stopping_no_improvement="any", early_stopping_no_improvement_patience=2,
-                 enforce_joint_limits: bool = True,
-                 num_limit_refinement_iterations: int = 10,
-                 clamp_to_limits: bool = False
-                 ):
+    def __init__(
+        self,
+        serial_chain: SerialChain,
+        pos_tolerance: float = 1e-3,
+        rot_tolerance: float = 1e-2,
+        retry_configs: Optional[torch.Tensor] = None,
+        num_retries: Optional[int] = None,
+        joint_limits: Optional[torch.Tensor] = None,
+        config_sampling_method: Union[str, Callable[[int], torch.Tensor]] = "uniform",
+        max_iterations: int = 50,
+        lr: float = 1.0,
+        line_search: Optional[LineSearch] = None,
+        regularlization: float = 1e-9,
+        lm_damping: float = 0.1,
+        position_weight: float = 1.0,
+        orientation_weight: float = 1.0,
+        debug=False,
+        early_stopping_any_converged=False,
+        early_stopping_no_improvement="any",
+        early_stopping_no_improvement_patience=2,
+        enforce_joint_limits: bool = True,
+        num_limit_refinement_iterations: int = 10,
+        clamp_to_limits: bool = False,
+    ):
         """
         :param serial_chain:
         :param pos_tolerance: position tolerance in meters

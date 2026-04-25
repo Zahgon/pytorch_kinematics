@@ -84,10 +84,7 @@ class Path(object):
 
 class ParseError(Exception):
     def __init__(self, e, path):
-        self.e = e
-        self.path = path
-        message = "ParseError in {}:\n{}".format(self.path, self.e)
-        super(ParseError, self).__init__(message)
+        pass
 
 
 class ValueType(object):
@@ -233,8 +230,7 @@ class Param(object):
 class Attribute(Param):
     def __init__(self, xml_var, value_type, required=True, default=None,
                  var=None):
-        Param.__init__(self, xml_var, value_type, required, default, var)
-        self.type = 'attribute'
+        pass
 
     def set_from_string(self, obj, value):
         """ Node is the parent node in this case """
@@ -255,9 +251,7 @@ class Attribute(Param):
 class Element(Param):
     def __init__(self, xml_var, value_type, required=True, default=None,
                  var=None, is_raw=False):
-        Param.__init__(self, xml_var, value_type, required, default, var)
-        self.type = 'element'
-        self.is_raw = is_raw
+        pass
 
     def set_from_xml(self, obj, node, path):
         pass
@@ -299,7 +293,21 @@ class Reflection(object):
         pass
 
     def set_from_xml(self, obj, node, path, info=None):
+        def get_attr_path(attribute):
+            pass
+
+        def get_element_path(element):
+            pass
+
         pass
+
+    def add_to_xml(self, obj, node):
+        pass
+
+
+class Object(YamlReflection):
+    """ Raw python object for yaml / xml representation """
+    XML_REFL = None
 
     def get_refl_vars(self):
         pass

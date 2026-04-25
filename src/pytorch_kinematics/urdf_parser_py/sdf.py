@@ -236,22 +236,16 @@ class Joint(xmlr.Object):
     def __init__(
         self, name=None, parent=None, child=None, joint_type=None, axis=None, pose=None
     ):
-        self.aggregate_init()
-        self.name = name
-        self.parent = parent
-        self.child = child
-        self.type = joint_type
-        self.axis = axis
-        self.pose = pose
+        pass
 
     # Aliases
     @property
     def joint_type(self):
-        return self.type
+        pass
 
     @joint_type.setter
     def joint_type(self, value):
-        self.type = value
+        pass
 
 
 xmlr.reflect(
@@ -270,13 +264,7 @@ xmlr.reflect(
 
 class Link(xmlr.Object):
     def __init__(self, name=None, pose=None, inertial=None, kinematic=False):
-        self.aggregate_init()
-        self.name = name
-        self.pose = pose
-        self.inertial = inertial
-        self.kinematic = kinematic
-        self.visuals = []
-        self.collisions = []
+        pass
 
 
 xmlr.reflect(
@@ -295,16 +283,7 @@ xmlr.reflect(
 
 class Model(xmlr.Object):
     def __init__(self, name=None, pose=None):
-        self.aggregate_init()
-        self.name = name
-        self.pose = pose
-        self.links = []
-        self.joints = []
-        self.joint_map = {}
-        self.link_map = {}
-
-        self.parent_map = {}
-        self.child_map = {}
+        pass
 
     def add_aggregate(self, typeName, elem):
         pass

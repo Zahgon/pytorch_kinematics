@@ -22,6 +22,9 @@ def pfloat(x):
 
 
 def xml_children(node):
+    def predicate(node):
+        pass
+
     pass
 
 
